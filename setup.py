@@ -23,7 +23,8 @@ setuptools.setup(
         'click>=6.6',
         'psutil>=4.3.0',
         'riemann-client>=6.3.0',
-        'supervisor>=3.0,<4.0'
+        'supervisor>=3.0,<4.0',
+        'influxdb==5.*'
     ],
 
     entry_points = {
