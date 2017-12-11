@@ -46,7 +46,7 @@ def getAllProcessInfo():
 @mock.patch('supermann.supervisor.Supervisor', autospec=True)
 @mock.patch('riemann_client.transport.TCPTransport', autospec=True)
 def supermann_instance(riemann_client_class, supervisor_class):
-    instance = Supermann(None, None).with_all_recivers()
+    instance = Supermann("localhost", None).with_all_recivers()
     instance.supervisor.configure_mock(**{
         # At least one process must be visible for the process metrics to run
         'rpc.getAllProcessInfo': mock.Mock(wraps=getAllProcessInfo),
@@ -60,11 +60,11 @@ def supermann_instance(riemann_client_class, supervisor_class):
 
 
 def test_riemann_client(supermann_instance):
-    assert supermann_instance.riemann.transport.connect.called
+    assert supermann_instance.output_client.riemann.transport.connect.called
 
 
 def test_one_message_per_event(supermann_instance):
-    assert len(supermann_instance.riemann.transport.send.call_args_list) == 2
+    assert len(supermann_instance.output_client.riemann.transport.send.call_args_list) == 2
 
 
 def test_supervisor_rpc_called(supermann_instance):

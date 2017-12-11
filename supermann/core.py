@@ -5,21 +5,21 @@ from __future__ import absolute_import
 import collections
 import os
 import sys
+from ConfigParser import ConfigParser
 
 import psutil
-import riemann_client.client
-import riemann_client.transport
 
 import supermann.metrics.process
 import supermann.metrics.system
 import supermann.signals
 import supermann.supervisor
+from supermann.outputs import load_output
 
 
 class Supermann(object):
     """Manages the components that make up a Supermann instance.
 
-    Manages a the Supervisor and Riemann clients, and distributes events to the
+    Manages a the Supervisor and Output clients, and distributes events to the
     :py:data:`supermann.signals.event` and :py:data:`supermann.signals.process`
     signals.
     """
@@ -36,20 +36,35 @@ class Supermann(object):
         self.log.info("Process PID is {0}, running under {1}".format(
             process.pid, process.ppid()))
 
+        # If host is present, use default riemann configuration
+        if host:
+            self.load_output("supermann.outputs.riemann.RiemannOutput", attrs=dict(host=host, port=port))
+
+
         # The Supervisor listener and client take their configuration from
         # the environment variables provided by Supervisor
         self.supervisor = supermann.supervisor.Supervisor()
-
-        # The Riemann client uses the host and port passed on the command line
-        self.riemann = riemann_client.client.QueuedClient(
-            riemann_client.transport.TCPTransport(host, port))
-        supermann.utils.getLogger(self.riemann).info(
-            "Using Riemann protobuf server at {0}:{1}".format(host, port))
 
         # This sets an exception handler to deal with uncaught exceptions -
         # this is used to ensure both a log message (and more importantly, a
         # timestamp) and a full traceback is output to stderr
         sys.excepthook = self.exception_handler
+
+    def load_output(self, output_class, configparser=None, attrs=None):
+        """
+        Loads output by it class path and inits it from configparser instance or from attrs dict
+
+        :type configparser: ConfigParser
+        """
+
+        # Output client wrapper
+        self.output_client = load_output(output_class)
+
+        # init output client
+
+        attrs = attrs or dict(configparser.items(self.output_client.section_name))
+
+        self.output_client.init(**attrs)
 
     def connect(self, signal, reciver):
         """Connects a signal that will recive messages from this instance
@@ -99,18 +114,18 @@ class Supermann(object):
         return self
 
     def run(self):
-        """Runs forever, ensuring Riemann is disconnected properly
+        """Runs forever, ensuring output client is disconnected properly
 
         :returns: the Supermann instance the method was called on
         """
-        with self.riemann:
+        with self.output_client:
             for event in self.supervisor.run_forever():
                 # Emit a signal for each event
                 supermann.signals.event.send(self, event=event)
                 # Emit a signal for each Supervisor subprocess
                 self.emit_processes(event=event)
                 # Send the queued events at the end of the cycle
-                self.riemann.flush()
+                self.output_client.flush()
         return self
 
     def exception_handler(self, *exc_info):

@@ -6,9 +6,14 @@ import click.testing
 import mock
 
 import supermann.cli
+from supermann.core import Supermann
+from supermann.outputs import load_output
+from supermann.outputs.debug import DebugOutput
+from supermann.outputs.riemann import RiemannOutput
 
 
 def main(args=[], env=None, command=supermann.cli.main):
+
     runner = click.testing.CliRunner()
     result = runner.invoke(command, args, env=env)
     print result.output
@@ -24,7 +29,11 @@ class TestCLI(object):
 
     def test_main_with_args(self, supermann_cls):
         main(['example.com', '6666'])
-        supermann_cls.assert_called_with('example.com', 6666)
+        supermann_cls.assert_called_with(u'example.com', 6666)
+
+    def test_custom_output_class(self, supermann_cls):
+        assert load_output('supermann.outputs.riemann.RiemannOutput').__class__ is RiemannOutput
+        assert load_output('supermann.outputs.debug.DebugOutput').__class__ is DebugOutput
 
     def test_main_with_some_args(self, supermann_cls):
         main(['example.com'])
@@ -60,3 +69,14 @@ class TestCLI(object):
         main([path], command=supermann.cli.from_file)
         configure_logging.assert_called_with('DEBUG')
         supermann_cls.assert_called_with('example.com', 6666)
+
+@mock.patch("supermann.supervisor.Supervisor")
+@mock.patch("supermann.outputs.influx.InfluxOutput.init")
+def test_from_config(output_cls, supervisor_cls):
+
+    path = os.path.join(os.path.dirname(__file__), 'supermann.ini')
+
+    main([path], command=supermann.cli.from_config)
+
+    output_cls.assert_called_with(database='database', host='test.host', password='password', username='admin')
+

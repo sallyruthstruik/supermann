@@ -29,7 +29,8 @@ setuptools.setup(
     entry_points = {
         'console_scripts': [
             'supermann = supermann.cli:main',
-            'supermann-from-file = supermann.cli:from_file'
+            'supermann-from-file = supermann.cli:from_file',
+            'supermann-from-config = supermann.cli:from_config'
         ]
     },
 
