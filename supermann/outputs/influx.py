@@ -7,10 +7,7 @@ import sys
 import supermann
 from supermann.outputs.base import BaseOutput
 
-try:
-    from influxdb.client import InfluxDBClient
-except ImportError:
-    logging.error("influxdb package not installed. You won't be able to use InfluxDbOutput")
+from influxdb.client import InfluxDBClient
 
 class Point(object):
     point = None
@@ -59,9 +56,6 @@ class InfluxOutput(BaseOutput):
         self.bulk = []
 
     def flush(self):
-        for p in self.bulk:
-            logging.error(p)
-
         self.influx_client.write_points(
             [p.to_influx() for p in self.bulk]
         )
