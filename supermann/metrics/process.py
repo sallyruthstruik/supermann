@@ -3,10 +3,17 @@
 from __future__ import absolute_import, division
 
 import functools
+import logging
+from pprint import pformat
 
 import psutil
+from psutil import Process
 
 import supermann.utils
+
+def with_children(process, metric_func):
+
+    return metric_func(process) + sum(metric_func(p) for p in process.children())
 
 
 def running_process(function):
@@ -44,10 +51,10 @@ def cpu(sender, process, data):
     """
     sender.output_client.event(
         service='process:{name}:cpu:percent'.format(**data),
-        metric_f=process.cpu_percent(interval=None))
+        metric_f=with_children(process, lambda p: p.cpu_percent(interval=None)))
     sender.output_client.event(
         service='process:{name}:cpu:absolute'.format(**data),
-        metric_f=sum(process.cpu_times()))
+        metric_f=with_children(process, lambda p: sum(p.cpu_times())))
 
 
 @running_process
@@ -57,17 +64,27 @@ def mem(sender, process, data):
     - ``process:{name}:mem:virt:absolute``
     - ``process:{name}:mem:rss:absolute``
     - ``process:{name}:mem:rss:percent``
+
+    :type process: Process
     """
-    memory_info = process.memory_info()
+
+    logging.error(process.memory_info().rss)
+    total = 0
+    for c in process.children():
+        logging.error("{}, {}".format(c.memory_info().rss, c.children()))
+        total += c.memory_info().rss
+
+    logging.error(process.memory_info().rss + total)
+
     sender.output_client.event(
         service='process:{name}:mem:virt:absolute'.format(name=data['name']),
-        metric_f=memory_info.vms)
+        metric_f=with_children(process, lambda p: p.memory_info().vms))
     sender.output_client.event(
         service='process:{name}:mem:rss:absolute'.format(name=data['name']),
-        metric_f=memory_info.rss)
+        metric_f=with_children(process, lambda p: p.memory_info().rss))
     sender.output_client.event(
         service='process:{name}:mem:rss:percent'.format(name=data['name']),
-        metric_f=process.memory_percent())
+        metric_f=with_children(process, lambda p: p.memory_percent()))
 
 
 @running_process
@@ -77,7 +94,8 @@ def fds(sender, process, data):
     - ``process:{name}:fds:absolute``
     - ``process:{name}:fds:percent``
     """
-    num_fds = process.num_fds()
+    num_fds = with_children(process, lambda p: p.num_fds())
+
     sender.output_client.event(
         service='process:{name}:fds:absolute'.format(**data),
         metric_f=num_fds)
