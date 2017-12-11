@@ -30,6 +30,7 @@ def mem(self, event):
     self.output_client.event(service='system:mem:percent', metric_f=mem.percent)
     self.output_client.event(service='system:mem:total', metric_f=mem.total)
     self.output_client.event(service='system:mem:free', metric_f=mem.free)
+    self.output_client.event(service='system:mem:used', metric_f=mem.used)
     self.output_client.event(service='system:mem:cached', metric_f=mem.cached)
     self.output_client.event(service='system:mem:buffers', metric_f=mem.buffers)
 
