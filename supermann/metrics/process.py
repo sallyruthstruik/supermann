@@ -68,14 +68,6 @@ def mem(sender, process, data):
     :type process: Process
     """
 
-    logging.error(process.memory_info().rss)
-    total = 0
-    for c in process.children():
-        logging.error("{}, {}".format(c.memory_info().rss, c.children()))
-        total += c.memory_info().rss
-
-    logging.error(process.memory_info().rss + total)
-
     sender.output_client.event(
         service='process:{name}:mem:virt:absolute'.format(name=data['name']),
         metric_f=with_children(process, lambda p: p.memory_info().vms))
