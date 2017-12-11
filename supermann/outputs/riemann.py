@@ -2,7 +2,7 @@ import riemann_client
 from riemann_client.client import QueuedClient
 
 import supermann
-from supermann.outputs._base import BaseOutput
+from supermann.outputs.base import BaseOutput
 
 class RiemannOutput(BaseOutput):
     section_name = "riemann"

@@ -5,7 +5,7 @@ import socket
 import sys
 
 import supermann
-from supermann.outputs._base import BaseOutput
+from supermann.outputs.base import BaseOutput
 
 try:
     from influxdb.client import InfluxDBClient
@@ -32,6 +32,15 @@ class Point(object):
 
 
 class InfluxOutput(BaseOutput):
+    """
+    Writes point into influxdb.
+
+    Each system metrics will be written into separated measurement.
+    All process metrics will be tagged by process_name and will be written into
+    separated metrics.
+
+    All points will be tagged with hostname.
+    """
     section_name = "influx"
 
     hostname = socket.gethostname()

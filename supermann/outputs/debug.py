@@ -1,6 +1,6 @@
 import logging
 
-from supermann.outputs._base import BaseOutput
+from supermann.outputs.base import BaseOutput
 import supermann
 
 class DebugOutput(BaseOutput):

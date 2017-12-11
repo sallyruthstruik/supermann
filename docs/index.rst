@@ -5,3 +5,5 @@
 
    supermann
    supermann.metrics
+   supermann.outputs
+   changelog

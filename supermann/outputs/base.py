@@ -2,6 +2,9 @@ from ConfigParser import ConfigParser
 
 
 class BaseOutput(object):
+    """
+    Base class for all outputs
+    """
     section_name = None
 
     def __init__(self):
@@ -9,7 +12,8 @@ class BaseOutput(object):
 
     def init(self, **params):
         """
-        This method called in Supermann initialization and should initialize output.
+        This method called in Supermann initialization and
+        should initialize output.
         """
         raise NotImplemented
 

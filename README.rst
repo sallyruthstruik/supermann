@@ -61,6 +61,37 @@ Supermann can be installed with ``pip install supermann``. It's recommended to i
 
 Supervisor can also be installed with ``pip``, or can be installed from your distributions package manager. Once Supermann is installed, add an ``eventlistener`` section to the Supervisor configuration (``/etc/supervisord.conf`` by default) and restart Supervisor.
 
+Usage with Influxdb
+---------------------------
+
+You can use supermann with influxdb output. For example:
+
+* Create /etc/supermann.ini file with contents:
+```ini
+[supermann]
+log_level = INFO
+output_class = supermann.outputs.influx.InfluxOutput
+
+[influx]
+host = <host of influx database>
+username = <username>
+password = <password>
+database = <database>
+
+```
+In influx section you can pass all parameters from here: http://influxdb-python.readthedocs.io/en/latest/api-documentation.html?highlight=InfluxDBClient#influxdbclient
+
+* In your supervisord.conf:
+```ini
+[eventlistener:supermann]
+command=supermann-from-config /etc/supermann.ini
+events=PROCESS_STATE,TICK_5
+
+```
+
+Note, that there is **supermann-from-config** command, not **supermann-from-args**
+
+
 Requirements
 ^^^^^^^^^^^^
 
